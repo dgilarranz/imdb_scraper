@@ -76,10 +76,9 @@ function scrapeMovie(url, res) {
         res.setHeader("Content-Type", "text/html");
         res.end(response);
     }).catch(error => {
-        res.statusCode = 500;
-        res.setHeader("Content-Type", "text/html");
-        res.end(error);
-    })    
+        // Si ocurre algún error, devolvemos el mensaje de error recibido
+        sendErrorResponse(res, 500, error);
+    });
 }
 
 // Función que solicita una URL a IMDB y devuelve el contenido HTML de la página

@@ -54,13 +54,21 @@ function scrapeMovie(url) {
     // Extraemos los datos deseados de la película
     response += addEntry("Título", $("h1").attr("data-testid", "hero-title-block__title").text());
     response += addEntry("Descripción", $("p").attr("data-testid", "plot").first().text());
+    
+    // Extraemos el género de una página que puede estar en Inglés o en Español
     let generos = "";
-    $("span:contains('Genre') ~ div > ul > li > a").each(function() {
+    $("span:contains('Genre') ~ div > ul > li > a, span:contains('Géneros') ~ div > ul > li > a, span:contains('genre') ~ div > ul > li > a, span:contains('géneros') ~ div > ul > li > a").each(function() {
         generos += `${$(this).text()} `;
     });
     response += addEntry("Género", generos.trimEnd());
     puntuacion = $("div:contains('IMDb RATING') ~ a > div > div > div > div > span").first().text();
     response += addEntry("Puntuación", puntuacion);
+
+    // Obetenemos la duración independientemente del idioma (se permiten español e inglés)
+    response += addEntry("Duración", $("span:contains('Duración') ~ div, span:contains('duración') ~ div, span:contains('Runtime') ~ div, span:contains('runtime') ~ div").first().text());
+    
+    // Devolvemos la respuesta generada.
+    return response;
 }
 
 // Función que solicita una URL a IMDB y devuelve el contenido HTML de la página

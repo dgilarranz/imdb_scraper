@@ -34,6 +34,11 @@ const server = http.createServer((req, res) => {
     }
 });
 
+// Arrancamos el servidor
+server.listen(port, () => {
+    process.stdout.write(`Servidor lanzado en el puerto ${port}\n`);
+});
+
 // Función empleada para devolver mensajes de error
 function sendErrorResponse(res, code, message) {
     res.statusCode = code;

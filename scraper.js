@@ -1,5 +1,6 @@
 const http = require("http");
 const https = require("https");
+const { data } = require("jquery");
 const jquery = require("jquery");
 const jsdom = require("jsdom");
 
@@ -7,7 +8,7 @@ const jsdom = require("jsdom");
 const port = !isNaN(Number(process.argv[2])) ? Number(process.argv[2]) : 3000;
 
 // Expresión regular que se usará para comprobar que los scrapes solicitados son correctos
-const IMDB_REGEX = /https:\/\/imdb.com\/title\/.+/
+const IMDB_REGEX = /https:\/\/www.imdb.com\/title\/.+/
 
 // Creamos un servidor
 const server = http.createServer((req, res) => {
@@ -17,10 +18,7 @@ const server = http.createServer((req, res) => {
         req.on("data", d => {
             if (IMDB_REGEX.test(d)) {
                 // Parseamos la URL solicitada
-                let movieData = scrapeMovie(d);
-                res.statusCode = 200;
-                res.setHeader("Content-Type", "text/html");
-                res.end(movieData);
+                scrapeMovie(d, res);
             }
             else {
                 // Si no es una URL válida, se devuelve un error
@@ -47,53 +45,62 @@ function sendErrorResponse(res, code, message) {
 }
 
 // Función que hace el scraping de una página IMBD para extraer los campos relevantes
-function scrapeMovie(url) {
-    // Obtenemos el html de la película
-    let movieHTMLData = sendRequest(url);
-    let response = "";
+function scrapeMovie(url, res) {
+    // Obtenemos el html de la película, llamando a la función
+    sendRequest(url).then((movieHTMLData) => {
+        let response = "";
 
-    // Obtenemos un DOM a partir del HTML, para poder parsearlo con jQuery
-    const dom = new jsdom(movieHTMLData);
-    const $ = jquery(dom.window);
-
-    // Extraemos los datos deseados de la película
-    response += addEntry("Título", $("h1").attr("data-testid", "hero-title-block__title").text());
-    response += addEntry("Descripción", $("p").attr("data-testid", "plot").first().text());
+        // Obtenemos un DOM a partir del HTML, para poder parsearlo con jQuery
+        const { JSDOM } = jsdom
+        const dom = new JSDOM(movieHTMLData);
+        const $ = jquery(dom.window);
     
-    // Extraemos el género de una página que puede estar en Inglés o en Español
-    let generos = "";
-    $("span:contains('Genre') ~ div > ul > li > a, span:contains('Géneros') ~ div > ul > li > a, span:contains('genre') ~ div > ul > li > a, span:contains('géneros') ~ div > ul > li > a").each(function() {
-        generos += `${$(this).text()} `;
-    });
-    response += addEntry("Género", generos.trimEnd());
-    puntuacion = $("div:contains('IMDb RATING') ~ a > div > div > div > div > span").first().text();
-    response += addEntry("Puntuación", puntuacion);
-
-    // Obetenemos la duración independientemente del idioma (se permiten español e inglés)
-    response += addEntry("Duración", $("span:contains('Duración') ~ div, span:contains('duración') ~ div, span:contains('Runtime') ~ div, span:contains('runtime') ~ div").first().text());
+        // Extraemos los datos deseados de la película
+        response += addEntry("Título", $("h1").attr("data-testid", "hero-title-block__title").text());
+        response += addEntry("Descripción", $("p").attr("data-testid", "plot").first().text());
+        
+        // Extraemos el género de una página que puede estar en Inglés o en Español
+        let generos = "";
+        $("span:contains('Genre') ~ div > ul > li > a, span:contains('Géneros') ~ div > ul > li > a, span:contains('genre') ~ div > ul > li > a, span:contains('géneros') ~ div > ul > li > a").each(function() {
+            generos += `${$(this).text()} `;
+        });
+        response += addEntry("Género", generos.trimEnd());
+        puntuacion = $("div:contains('IMDb RATING') ~ a > div > div > div > div > span").first().text();
+        response += addEntry("Puntuación", puntuacion);
     
-    // Devolvemos la respuesta generada.
-    return response;
+        // Obetenemos la duración independientemente del idioma (se permiten español e inglés)
+        response += addEntry("Duración", $("span:contains('Duración') ~ div, span:contains('duración') ~ div, span:contains('Runtime') ~ div, span:contains('runtime') ~ div").first().text());
+        
+        // Devolvemos la respuesta generada.
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "text/html");
+        res.end(response);
+    }).catch(error => {
+        res.statusCode = 500;
+        res.setHeader("Content-Type", "text/html");
+        res.end(error);
+    })    
 }
 
 // Función que solicita una URL a IMDB y devuelve el contenido HTML de la página
-function sendRequest(url) {
-    // Enviamos la petición
-    let data = "";
-    const req = https.get(url, res => {
-        // Conforme se reciben trozos de la respuesta se añaden a data
-        res.on("data", chunk => {
-           data += chunk; 
+async function sendRequest(url) {
+    // Creamos una promesa para esperar a recibir la respuesta a la petición antes de continuar
+    return new Promise((resolve, reject) => {
+        let data = "";
+        https.get(String(url), res => {
+            // Conforme se reciben trozos de la respuesta se añaden a data
+            res.on("data", chunk => {
+               data += chunk; 
+            });
+            res.on("end", () => {
+                process.stdout.write(data);
+                resolve(data);
+            });
+        }).on("error", error => {
+            data = `Error al solicitar la url\nDetalles:\n\t${error}\n`;
+            reject(data);
         });
     });
-
-    // Si hay algún error, cambiamos el valor de data a "Error al solicitar la URL"
-    req.on("error", error => {
-        data = `Error al solicitar la url\nDetalles:${error}`;
-    });
-
-    // Devolvemos los datos leídos
-    return data;
 }
 
 // Función que devuelve un elemento html compuesto por título y valor

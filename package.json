@@ -11,5 +11,8 @@
   "devDependencies": {
     "jquery": "^3.6.1",
     "jsdom": "^20.0.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }

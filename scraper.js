@@ -67,7 +67,7 @@ function scrapeMovie(url, res) {
         const $ = jquery(dom.window);
     
         // Extraemos los datos deseados de la película
-        response += addEntry("Título", $("h1").attr("data-testid", "hero-title-block__title").text());
+        response += `<h2>${$("h1").attr("data-testid", "hero-title-block__title").text()}</h2><hr>`;
         response += addEntry("Descripción", $("p").attr("data-testid", "plot").first().text());
         
         // Extraemos el género de una página que puede estar en Inglés o en Español

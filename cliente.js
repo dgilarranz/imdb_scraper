@@ -9,6 +9,9 @@ $("#scrape-button").on("click", function() {
     $("div.alert").hide();
     $("input").removeClass("is-invalid");
 
+    // Colocamos el cursor de espera
+    $("body").css("cursor", "progress");
+
     // Obtenemos el enlace y el puerto
     let url = $("#url-text-field").val();
     let port = $("#port-text-field").val();
@@ -60,6 +63,9 @@ function sendRequest(url, port) {
 function showMovie(movieHTML) {
     // Ocultamos el HTML anterior
     $("#div-buscador").hide();
+
+    // Devolvemos el cursor a la normalidad
+    $("body").css("cursor", "default");
 
     // Creamos un div y añadimos la película en su interior
     $("#main-div").append("<div id='movie-div'></div>");

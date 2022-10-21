@@ -60,7 +60,6 @@ function scrapeMovie(url, res) {
     // Obtenemos el html de la película, llamando a la función
     sendRequest(url).then((movieHTMLData) => {
         let response = "";
-        process.stdout.write(movieHTMLData);
 
         // Obtenemos un DOM a partir del HTML, para poder parsearlo con jQuery
         const { JSDOM } = jsdom
@@ -97,6 +96,9 @@ function scrapeMovie(url, res) {
 
 // Función que solicita una URL a IMDB y devuelve el contenido HTML de la página
 async function sendRequest(url) {
+    // Ajustamos la url al formato https://www.imbd.com/title/...
+    url = url.toString().replace(/^.*imdb/,"https://www.imdb");
+
     // Creamos una promesa para esperar a recibir la respuesta a la petición antes de continuar
     return new Promise((resolve, reject) => {
         let data = "";

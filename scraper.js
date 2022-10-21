@@ -68,7 +68,7 @@ function scrapeMovie(url, res) {
     
         // Extraemos los datos deseados de la película
         response += `<h2>${$("h1").attr("data-testid", "hero-title-block__title").text()}</h2><hr>`;
-        response += addEntry("Descripción", $("p").attr("data-testid", "plot").first().text());
+        response += addEntry("Descripción", $("p").attr("data-testid", "plot").first().children()[0].textContent);
         
         // Extraemos el género de una página que puede estar en Inglés o en Español
         let generos = "";

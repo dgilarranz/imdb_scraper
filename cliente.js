@@ -41,19 +41,23 @@ function sendRequest(url, port) {
 
     fetch(`http://127.0.0.1:${port}`, options)
     .then((response) => {
+        // Si se ha recibido un error, se lanza una excepción
+        if (!response.ok) {
+            return Promise.reject(response);
+        }
+
         return response.text();
     })
     .then((data) => {
         showMovie(data);
     })
     .catch((error) => {
-        showError(error);
+        error.text().then(showError);
     });
 }
 
 // Función que actualiza el documento para mostrar la película recibida
 function showMovie(movieHTML) {
-    console.log(movieHTML);
     // Ocultamos el HTML anterior
     $("#div-buscador").hide();
 
@@ -74,5 +78,21 @@ function showMovie(movieHTML) {
 
 // Función que actualiza el documento para mostrar un error
 function showError(error) {
-    console.log(error);
+    // Ocultamos el HTML anterior
+    $("#div-buscador").hide();
+
+    // Creamos un div y añadimos la película en su interior
+    $("#main-div").append("<div id='error-div'></div>");
+    $("#error-div").addClass("rounded p-5");
+    $("#error-div").css("background-color", "white");
+    $("#error-div").append("<div id='alert-div' class='alert alert-danger'></div>");
+    $("#alert-div").html(error);
+
+    // Añadimos un botón para volver atrás
+    $("#error-div").append("<button id='volver-btn' class='btn btn-primary'>Volver</button>");
+    $("#volver-btn").on("click", function() {
+        // Mostramos el buscador y borramos el div añadido
+        $("#div-buscador").show();
+        $("#error-div").remove();
+    });
 }

@@ -3,15 +3,21 @@ const https = require("https");
 const { data } = require("jquery");
 const jquery = require("jquery");
 const jsdom = require("jsdom");
+const { stdout } = require("process");
 
 // Obtenemos el puerto de los argumentos. Si no se especifica, se toma el puerto 3000
 const port = !isNaN(Number(process.argv[2])) ? Number(process.argv[2]) : 3000;
 
-// Expresión regular que se usará para comprobar que los scrapes solicitados son correctos
-const IMDB_REGEX = /https:\/\/www.imdb.com\/title\/.+/
+// Expresión regular que se usará para comprobar que los enlaces solicitados son correctos
+const IMDB_REGEX = /^(?:https:\/\/www\.|http:\/\/www\.|www\.)?imdb.com\/title\/.+$/
 
 // Creamos un servidor
 const server = http.createServer((req, res) => {
+    // Añadimos las cabeceras adecuadas para permitir peticiones de origen cruzado
+    res.setHeader("Access-Control-Allow-Origin", "*");          // Se permite cualquier origen
+    res.setHeader("Access-Control-Allow-Methods", "POST");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    
     // Si se recibe una petición, se comprueba que el tipo de petición es POST
     if (req.method == "POST") {
         // Si es una petición post, verificamos que la página solicitada es de IMDB
@@ -26,9 +32,14 @@ const server = http.createServer((req, res) => {
             }
         });
     }
+    else if (req.method == "OPTIONS") {
+        // Permitimos métodos OPTIONS
+        res.statusCode = 200;
+        res.end();
+    }    
     else {
-        // Si no es una petición post, se devuelve un mensaje de error
-        sendErrorResponse(res, 405, "Error: El servidor sólo permite métodos POST");
+        // Si no es una petición post u options, se devuelve un mensaje de error
+        sendErrorResponse(res, 405, "Error: El servidor solo permite métodos POST y OPTIONS");
     }
 });
 
@@ -61,16 +72,18 @@ function scrapeMovie(url, res) {
         
         // Extraemos el género de una página que puede estar en Inglés o en Español
         let generos = "";
+        console.log($("span:contains('Genre') ~ div > ul > li > a").text());
         $("span:contains('Genre') ~ div > ul > li > a, span:contains('Géneros') ~ div > ul > li > a, span:contains('genre') ~ div > ul > li > a, span:contains('géneros') ~ div > ul > li > a").each(function() {
             generos += `${$(this).text()} `;
         });
-        response += addEntry("Género", generos.trimEnd());
-        puntuacion = $("div:contains('IMDb RATING') ~ a > div > div > div > div > span").first().text();
+        response += addEntry("Género", generos);
+        let puntuacion = $("div:contains('IMDb RATING') ~ a > div > div > div > div > span").first().text();
         response += addEntry("Puntuación", puntuacion);
     
         // Obetenemos la duración independientemente del idioma (se permiten español e inglés)
         response += addEntry("Duración", $("span:contains('Duración') ~ div, span:contains('duración') ~ div, span:contains('Runtime') ~ div, span:contains('runtime') ~ div").first().text());
         
+        process.stdout.write(response);
         // Devolvemos la respuesta generada.
         res.statusCode = 200;
         res.setHeader("Content-Type", "text/html");
@@ -92,7 +105,6 @@ async function sendRequest(url) {
                data += chunk; 
             });
             res.on("end", () => {
-                process.stdout.write(data);
                 resolve(data);
             });
         }).on("error", error => {

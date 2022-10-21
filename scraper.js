@@ -28,7 +28,7 @@ const server = http.createServer((req, res) => {
             }
             else {
                 // Si no es una URL válida, se devuelve un error
-                sendErrorResponse(res, 400, "Error: la URL debe corresponderse a una página de película en IMDB");
+                sendErrorResponse(res, 400, "La URL debe corresponderse a una página de película en IMDB");
             }
         });
     }
@@ -39,7 +39,7 @@ const server = http.createServer((req, res) => {
     }    
     else {
         // Si no es una petición post u options, se devuelve un mensaje de error
-        sendErrorResponse(res, 405, "Error: El servidor solo permite métodos POST y OPTIONS");
+        sendErrorResponse(res, 405, "El servidor solo permite métodos POST y OPTIONS");
     }
 });
 
@@ -52,7 +52,7 @@ server.listen(port, () => {
 function sendErrorResponse(res, code, message) {
     res.statusCode = code;
     res.setHeader("Content-Type", "text/html");
-    res.end(`<h1>${message}</h1>`);
+    res.end(`<p><strong>Error</strong>: ${message}<p>`);
 }
 
 // Función que hace el scraping de una página IMBD para extraer los campos relevantes

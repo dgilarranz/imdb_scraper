@@ -60,6 +60,7 @@ function scrapeMovie(url, res) {
     // Obtenemos el html de la película, llamando a la función
     sendRequest(url).then((movieHTMLData) => {
         let response = "";
+        process.stdout.write(movieHTMLData);
 
         // Obtenemos un DOM a partir del HTML, para poder parsearlo con jQuery
         const { JSDOM } = jsdom
@@ -72,18 +73,18 @@ function scrapeMovie(url, res) {
         
         // Extraemos el género de una página que puede estar en Inglés o en Español
         let generos = "";
-        console.log($("span:contains('Genre') ~ div > ul > li > a").text());
-        $("span:contains('Genre') ~ div > ul > li > a, span:contains('Géneros') ~ div > ul > li > a, span:contains('genre') ~ div > ul > li > a, span:contains('géneros') ~ div > ul > li > a").each(function() {
-            generos += `${$(this).text()} `;
+        $("a").each(function() {
+            if (/genre/.test($(this).attr("href")) && $(this).attr("role") == "button") {
+                generos += $(this).text() + " ";
+            }
         });
-        response += addEntry("Género", generos);
+        response += addEntry("Géneros", generos.trimEnd());
         let puntuacion = $("div:contains('IMDb RATING') ~ a > div > div > div > div > span").first().text();
         response += addEntry("Puntuación", puntuacion);
     
         // Obetenemos la duración independientemente del idioma (se permiten español e inglés)
         response += addEntry("Duración", $("span:contains('Duración') ~ div, span:contains('duración') ~ div, span:contains('Runtime') ~ div, span:contains('runtime') ~ div").first().text());
         
-        process.stdout.write(response);
         // Devolvemos la respuesta generada.
         res.statusCode = 200;
         res.setHeader("Content-Type", "text/html");

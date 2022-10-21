@@ -59,7 +59,17 @@ function showMovie(movieHTML) {
 
     // Creamos un div y añadimos la película en su interior
     $("#main-div").append("<div id='movie-div'></div>");
+    $("#movie-div").addClass("rounded p-5");
+    $("#movie-div").css("background-color", "white");
     $("#movie-div").append(movieHTML);
+
+    // Añadimos un botón para volver atrás
+    $("#movie-div").append("<button id='volver-btn' class='btn btn-primary'>Volver</button>");
+    $("#volver-btn").on("click", function() {
+        // Mostramos el buscador y borramos el div añadido
+        $("#div-buscador").show();
+        $("#movie-div").remove();
+    });
 }
 
 // Función que actualiza el documento para mostrar un error
